@@ -14,7 +14,7 @@ jobs:
       CLUSTER_NAME: monitor
       CLUSTER_ZONE: us-central1-a
       REPOSITORY: gke-prod-app
-      IMAGE_NAME: us-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/gke-prod-app
+      IMAGE_NAME: us.gcr.io/${{ env.PROJECT_ID }}/gke-prod-app:${{ github.sha }}
 
 
 
@@ -43,12 +43,13 @@ jobs:
       # 5️⃣ Build Docker image
       - name: Build Docker image
         run: |
-          docker build -t us.gcr.io/$PROJECT_ID/gke-prod-app . 
+          docker build -t $IMAGE_NAME .
+          
 
       # 6️⃣ Push Docker image to GCR
       - name: Push Docker image
         run: |
-          docker push us.gcr.io/$PROJECT_ID/gke-prod-app
+          docker push $IMAGE_NAME
           
 
 
