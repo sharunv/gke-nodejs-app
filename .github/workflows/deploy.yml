@@ -14,52 +14,50 @@ jobs:
       CLUSTER_NAME: monitor
       CLUSTER_ZONE: us-central1-a
       REPOSITORY: gke-prod-app
-      IMAGE_NAME: us.gcr.io/${{ env.PROJECT_ID }}/gke-prod-app:${{ github.sha }}
-
-
+      IMAGE: us.gcr.io/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/app
 
     steps:
-      # 1️⃣ Checkout the repo
+      # 1️⃣ Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ Authenticate with GCP
+      # 2️⃣ Authenticate with Google Cloud
       - name: Set up GCP credentials
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 3️⃣ Set up gcloud SDK
-      - name: Set up Google Cloud SDK
+      # 3️⃣ Install Google Cloud SDK
+      - name: Set up gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      # 4️⃣ Configure Docker to use GCR
-      - name: Configure Docker for GCR
-        run: |
-          gcloud auth configure-docker
+      # 4️⃣ Configure Docker for GCR
+      - name: Configure Docker
+        run: gcloud auth configure-docker --quiet
 
-      # 5️⃣ Build Docker image
+      # 5️⃣ Build & tag Docker image
       - name: Build Docker image
         run: |
-          docker build -t $IMAGE_NAME .
-          
+          GIT_SHA=${GITHUB_SHA::7}
+          docker build -t ${{ env.IMAGE }}:$GIT_SHA -t ${{ env.IMAGE }}:latest .
 
-      # 6️⃣ Push Docker image to GCR
+      # 6️⃣ Push Docker image
       - name: Push Docker image
         run: |
-          docker push $IMAGE_NAME
-          
-
+          GIT_SHA=${GITHUB_SHA::7}
+          docker push ${{ env.IMAGE }}:$GIT_SHA
+          docker push ${{ env.IMAGE }}:latest
 
       # 7️⃣ Get GKE credentials
       - name: Get GKE credentials
         run: |
-          gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --zone ${{ env.CLUSTER_ZONE }}
+          gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --zone ${{ env.CLUSTER_ZONE }} --project ${{ env.PROJECT_ID }}
 
       # 8️⃣ Deploy to GKE
       - name: Deploy to GKE
         run: |
-          kubectl set image deployment/your-deployment your-container=${{ env.IMAGE_NAME }}
-          kubectl rollout status deployment/your-deployment
+          GIT_SHA=${GITHUB_SHA::7}
+          kubectl set image deployment/gke-prod-app gke-prod-app=${{ env.IMAGE }}:$GIT_SHA
+          kubectl rollout status deployment/gke-prod-app
