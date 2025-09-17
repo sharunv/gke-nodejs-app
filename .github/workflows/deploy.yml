@@ -14,7 +14,9 @@ jobs:
       CLUSTER_NAME: monitor
       CLUSTER_ZONE: us-central1-a
       REPOSITORY: gke-prod-app
-      IMAGE: us.gcr.io/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/app
+      IMAGE: us-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/app
+
+
 
     steps:
       # 1️⃣ Checkout repository
@@ -47,7 +49,7 @@ jobs:
       - name: Push Docker image
         run: |
           GIT_SHA=${GITHUB_SHA::7}
-          docker push ${{ env.IMAGE }}:$GIT_SHA
+          
           docker push ${{ env.IMAGE }}:latest
 
       # 7️⃣ Get GKE credentials
