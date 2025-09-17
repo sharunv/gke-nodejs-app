@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - main
-
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/gke-prod-app:${{ github.sha }}
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
