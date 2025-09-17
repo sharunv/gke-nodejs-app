@@ -21,10 +21,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # 2. Authenticate to GCP
+    # 2. Authenticate to GCP (with correct JSON handling)
     - name: Authenticate to GCP
       run: |
-        echo "${{ secrets.GCP_SA_KEY }}" > gcp-key.json
+        printf '%s' "${{ secrets.GCP_SA_KEY }}" > gcp-key.json
         gcloud auth activate-service-account --key-file=gcp-key.json
         gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
