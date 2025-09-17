@@ -1,12 +1,14 @@
-name: Deploy to GKE with Helm
+name: CI/CD to GKE with GCR
 
 on:
   push:
     branches:
       - main
+
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/gke-prod-app:${{ github.sha }}
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
@@ -15,39 +17,49 @@ jobs:
       id-token: 'write'
 
     steps:
+    # 1. Checkout repo
     - name: Checkout source
       uses: actions/checkout@v3
 
+    # 2. Authenticate to Google Cloud
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v1
       with:
         credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-    - name: Set up gcloud
+    # 3. Set up gcloud
+    - name: Set up gcloud CLI
       uses: google-github-actions/setup-gcloud@v1
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
 
+    # 4. Configure Docker for GCR
     - name: Configure Docker
       run: gcloud auth configure-docker gcr.io --quiet
 
+    # 5. Build and push Docker image
     - name: Build & Push Docker image
       run: |
-        IMAGE=gcr.io/${{ secrets.GCP_PROJECT_ID }}/gke-prod-app:$GITHUB_SHA
+        echo "Building image $IMAGE"
         docker build -t $IMAGE .
         docker push $IMAGE
         echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
+    # 6. Get GKE credentials
     - name: Get GKE credentials
       run: |
-        gcloud container clusters get-credentials my-cluster --zone us-central1-a --project ${{ secrets.GCP_PROJECT_ID }}
+        gcloud container clusters get-credentials my-cluster \
+          --zone us-central1-a \
+          --project ${{ secrets.GCP_PROJECT_ID }}
 
+    # 7. Set up Helm
     - name: Set up Helm
       uses: azure/setup-helm@v3
 
+    # 8. Deploy with Helm
     - name: Deploy with Helm
       run: |
         helm upgrade --install gke-prod-app ./helm/gke-prod-app \
           --namespace default \
           --set image.repository=gcr.io/${{ secrets.GCP_PROJECT_ID }}/gke-prod-app \
-          --set image.tag=$GITHUB_SHA
+          --set image.tag=${{ github.sha }}
