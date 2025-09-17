@@ -1,0 +1,25 @@
+replicaCount: 3
+
+image:
+  repository: gcr.io/PROJECT_ID/gke-prod-app
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+livenessProbe:
+  path: /healthz
+  port: 8080
+readinessProbe:
+  path: /healthz
+  port: 8080
