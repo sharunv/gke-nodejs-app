@@ -1,7 +1,7 @@
 replicaCount: 3
 
 image:
-  repository: gcr.io/PROJECT_ID/gke-prod-app
+  repository: gcr.io/$PROJECT_ID/gke-prod-app
   tag: "latest"
   pullPolicy: IfNotPresent
 
