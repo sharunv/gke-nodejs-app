@@ -45,7 +45,8 @@ jobs:
       # 6️⃣ Push Docker image to GCR
       - name: Push Docker image
         run: |
-          docker push ${{ env.IMAGE_NAME }}
+          docker push us.gcr.io/$PROJECT_ID/gke-prod-app
+
 
       # 7️⃣ Get GKE credentials
       - name: Get GKE credentials
