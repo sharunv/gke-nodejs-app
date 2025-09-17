@@ -17,46 +17,40 @@ jobs:
       id-token: 'write'
 
     steps:
-    # 1. Checkout repo
-    - name: Checkout source
+    # 1. Checkout source
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    # 2. Authenticate to Google Cloud
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
+    # 2. Authenticate to GCP
+    - name: Authenticate to GCP
+      run: |
+        echo "${{ secrets.GCP_SA_KEY }}" > gcp-key.json
+        gcloud auth activate-service-account --key-file=gcp-key.json
+        gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
-    # 3. Set up gcloud
-    - name: Set up gcloud CLI
-      uses: google-github-actions/setup-gcloud@v1
-      with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-    # 4. Configure Docker for GCR
+    # 3. Configure Docker for GCR
     - name: Configure Docker
       run: gcloud auth configure-docker gcr.io --quiet
 
-    # 5. Build and push Docker image
+    # 4. Build & push Docker image
     - name: Build & Push Docker image
       run: |
-        echo "Building image $IMAGE"
         docker build -t $IMAGE .
         docker push $IMAGE
         echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-    # 6. Get GKE credentials
+    # 5. Get GKE credentials
     - name: Get GKE credentials
       run: |
         gcloud container clusters get-credentials my-cluster \
           --zone us-central1-a \
           --project ${{ secrets.GCP_PROJECT_ID }}
 
-    # 7. Set up Helm
+    # 6. Set up Helm
     - name: Set up Helm
       uses: azure/setup-helm@v3
 
-    # 8. Deploy with Helm
+    # 7. Deploy with Helm
     - name: Deploy with Helm
       run: |
         helm upgrade --install gke-prod-app ./helm/gke-prod-app \
